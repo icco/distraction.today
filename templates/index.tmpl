@@ -6,13 +6,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <script src="https://cdn.tailwindcss.com?plugins=typography,aspect-ratio,container-queries"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.19/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 
     <style>
       body {
         max-width: 1200px;
         font-family: NeueHaas;
-        background-color: #221F26;
       }
 
       h1 {
@@ -64,7 +64,7 @@
         {{ end }}
         <p>Quote provided by <a href="{{ .ContributorURL }}" target="_blank">{{ .Quote.Contributor }}</a></p>
         <p>Learn <a href="/about" target="_blank">about distraction.today</a></p>
-        <p>Copyright &copy; {{ .Year }}.</p>
+        <p>Copyright &copy; {{ .Year }} - All rights reserved.</p>
       </aside>
     </footer>
   </body>
