@@ -37,3 +37,17 @@ func GetTodaysQuote(date time.Time) (*Quote, error) {
 
 	return nil, fmt.Errorf("no quote found for date %q", today)
 }
+
+func GetContribURL(contributor string) string {
+	file, err := fs.Open("contributors.json")
+	if err != nil {
+		return ""
+	}
+
+	contributors := map[string]string{}
+	if err := json.NewDecoder(file).Decode(&contributors); err != nil {
+		return ""
+	}
+
+	return contributors[contributor]
+}
