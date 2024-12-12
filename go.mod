@@ -8,7 +8,6 @@ require (
 	github.com/icco/gutil v0.0.0-20231226055340-e0dfddaad70c
 	github.com/unrolled/render v1.7.0
 	github.com/unrolled/secure v1.17.0
-	go.uber.org/zap v1.27.0
 )
 
 require (
@@ -17,5 +16,6 @@ require (
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a // indirect
 	github.com/icco/zapdriver v1.4.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 )
