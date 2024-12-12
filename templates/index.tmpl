@@ -6,32 +6,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,container-queries"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=typography,aspect-ratio,container-queries"></script>
 
     <style>
       body {
         max-width: 1200px;
-        background-color: #221F26;
-        color: #C8C8C9;
         font-family: NeueHaas;
-        font-size: 16px;
-        line-height: 24px;
+        background-color: #221F26;
       }
 
       h1 {
         font-family: NeueHaasMedium;
-        font-size: 20px;
-        letter-spacing: .25px;
-        line-height: 28px;
-        padding-bottom: 48px;
       }
 
       blockquote {
         font-family: NeueHaasMedium;
-        font-size: 20px;
-        letter-spacing: .25px;
-        line-height: 28px;
-        padding-bottom: 48px;
       }
     </style>
 
@@ -53,17 +42,27 @@
     </script>
   </head>
 
-  <body>
-    <h1>A distraction a day keeps the doctor away.</h1>
-    <blockquote>
-      {{ .Quote.Quote }}
-    </blockquote>
-    <p>
-      - {{ .Quote.Author }}
-    </p>
-    <p>
-      Contributed by {{ .Quote.Contributor }}
-    </p>
+  <body class="">
+    <main class="grid place-content-center h-screen">
+      <div class="prose prose-invert m-4">
+        <h1>distraction.today</h1>
+
+        <div class="">
+          <blockquote class="">
+            <p class="">
+              {{ .Quote.Quote }}
+            </p>
+            <cite class="">― {{ .Quote.Author }}</cite>
+          </blockquote>
+        </div>
+
+        <div class="text-sm">
+          <p>
+            Contributed by {{ .Quote.Contributor }}
+          </p>
+        </div>
+      </div>
+    </main>
   </body>
 
 </html>
