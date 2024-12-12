@@ -55,14 +55,18 @@
             <cite class="text-base">― {{ .Quote.Author }}</cite>
           </blockquote>
         </div>
-
-        <div class="text-xs">
-          <p>
-            Contributed by {{ .Quote.Contributor }}
-          </p>
-        </div>
       </div>
     </main>
+    <footer class="footer footer-center bg-base-300 text-base-content p-4">
+      <aside>
+        {{ if .Quote.SourceURL }}
+        <p>Learn more about the quote: <a href="{{ .Quote.SourceURL }}" target="_blank">{{ .Quote.Source }}</a></p>
+        {{ end }}
+        <p>Quote provided by <a href="{{ .ContributorURL }}" target="_blank">{{ .Quote.Contributor }}</a></p>
+        <p>Learn <a href="/about" target="_blank">about distraction.today</a></p>
+        <p>Copyright &copy; {{ .Year }}.</p>
+      </aside>
+    </footer>
   </body>
 
 </html>

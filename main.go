@@ -91,9 +91,13 @@ func main() {
 		}
 
 		data := struct {
-			Quote *static.Quote
+			Quote          *static.Quote
+			ContributorURL string
+			Year           int
 		}{
-			Quote: q,
+			Quote:          q,
+			ContributorURL: static.GetContribURL(q.Contributor),
+			Year:           time.Now().Year(),
 		}
 
 		if err := re.HTML(w, http.StatusOK, "index", data); err != nil {

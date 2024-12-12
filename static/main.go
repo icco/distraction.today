@@ -15,6 +15,8 @@ type Quote struct {
 	Author      string `json:"author"`
 	Quote       string `json:"quote"`
 	Contributor string `json:"contributor"`
+	Source      string `json:"source"`
+	SourceURL   string `json:"source_url"`
 }
 
 func GetTodaysQuote(date time.Time) (*Quote, error) {
