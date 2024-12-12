@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	service = "walls"
+	service = "distraction.today"
 	project = "icco-cloud"
 )
 

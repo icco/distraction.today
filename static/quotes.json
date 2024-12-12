@@ -1,8 +1,20 @@
 [
   {
-    "date": "2025-01-01",
+    "date": "2024-12-12",
     "author": "Oscar Wilde",
     "quote": "Be yourself; everyone else is already taken.",
     "contributor": "@icco"
+  },
+  {
+    "date": "2024-12-13",
+    "author": "Tristan Saldanha",
+    "quote": "You can put any number you want in a spreadsheet to make yourself feel good",
+    "contributor": "Roshan"
+  },
+  {
+    "date": "template",
+    "author": "",
+    "quote": "",
+    "contributor": ""
   }
 ]
