@@ -5,15 +5,16 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"time"
 
 	chi "github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/icco/distraction.today/static"
 	"github.com/icco/gutil/etag"
 	"github.com/icco/gutil/logging"
 	"github.com/unrolled/render"
 	"github.com/unrolled/secure"
-	"go.uber.org/zap"
 )
 
 const (
@@ -28,15 +29,6 @@ var (
 	// See:
 	//  - https://github.com/unrolled/render/blob/v1/README.md
 	//  - https://godoc.org/gopkg.in/unrolled/render.v1
-	Renderer = render.New(render.Options{
-		Charset:                   "UTF-8",
-		DisableHTTPErrorRendering: false,
-		Extensions:                []string{".tmpl", ".html"},
-		IndentJSON:                false,
-		IndentXML:                 true,
-		RequirePartials:           false,
-		Funcs:                     []template.FuncMap{template.FuncMap{}},
-	})
 )
 
 func main() {
@@ -75,8 +67,8 @@ func main() {
 
 	r.Use(func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("report-to", `{"group":"default","max_age":10886400,"endpoints":[{"url":"https://reportd.natwelch.com/report/wallpapers"}]}`)
-			w.Header().Set("reporting-endpoints", `default="https://reportd.natwelch.com/reporting/wallpapers"`)
+			w.Header().Set("report-to", `{"group":"default","max_age":10886400,"endpoints":[{"url":"https://reportd.natwelch.com/report/distraction.today"}]}`)
+			w.Header().Set("reporting-endpoints", `default="https://reportd.natwelch.com/reporting/distraction.today"`)
 
 			h.ServeHTTP(w, r)
 		})
@@ -85,4 +77,26 @@ func main() {
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hi."))
 	})
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		re := render.New(render.Options{
+			Charset:                   "UTF-8",
+			DisableHTTPErrorRendering: false,
+			Extensions:                []string{".tmpl", ".html"},
+			IndentJSON:                false,
+			IndentXML:                 true,
+			RequirePartials:           false,
+			Funcs:                     []template.FuncMap{},
+		})
+
+		data, err := static.GetTodaysQuote(time.Now())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		re.HTML(w, http.StatusOK, "index", data)
+	})
+
+	http.ListenAndServe(fmt.Sprintf(":%s", port), r)
 }
