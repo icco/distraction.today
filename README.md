@@ -1,0 +1,2 @@
+# distraction.today
+Some quotes
