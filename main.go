@@ -24,6 +24,15 @@ const (
 
 var (
 	log = logging.Must(logging.NewLogger(service))
+	re  = render.New(render.Options{
+		Charset:                   "UTF-8",
+		DisableHTTPErrorRendering: false,
+		Extensions:                []string{".tmpl", ".html"},
+		IndentJSON:                false,
+		IndentXML:                 true,
+		RequirePartials:           false,
+		Funcs:                     []template.FuncMap{},
+	})
 )
 
 func main() {
@@ -74,16 +83,6 @@ func main() {
 	})
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		re := render.New(render.Options{
-			Charset:                   "UTF-8",
-			DisableHTTPErrorRendering: false,
-			Extensions:                []string{".tmpl", ".html"},
-			IndentJSON:                false,
-			IndentXML:                 true,
-			RequirePartials:           false,
-			Funcs:                     []template.FuncMap{},
-		})
-
 		q, err := static.GetTodaysQuote(time.Now())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -91,12 +90,29 @@ func main() {
 		}
 
 		data := struct {
-			Quote *static.Quote
+			Quote          *static.Quote
+			ContributorURL string
+			Year           int
 		}{
-			Quote: q,
+			Quote:          q,
+			ContributorURL: static.GetContribURL(q.Contributor),
+			Year:           time.Now().Year(),
 		}
 
 		if err := re.HTML(w, http.StatusOK, "index", data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
+	r.Get("/about", func(w http.ResponseWriter, r *http.Request) {
+		data := struct {
+			Year int
+		}{
+			Year: time.Now().Year(),
+		}
+
+		if err := re.HTML(w, http.StatusOK, "about", data); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

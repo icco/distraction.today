@@ -48,22 +48,17 @@
         <h1 class="text-lg"><a href="/">distraction.today</a></h1>
 
         <div class="">
-          <blockquote class="">
-            <p class="text-2xl hyphens-auto">
-              {{ .Quote.Quote }}
-            </p>
-            <cite class="text-base">― {{ .Quote.Author }}</cite>
-          </blockquote>
+          <p>distraction.today is a daily quote service that provides a new quote every day. The quotes are sourced from
+            a variety of sources, including books, articles, and other online resources.</p>
+          <p>Created by <a href="https://natwelch.com" target="_blank">Nat Welch</a> as a hope to provide inspiration,
+            levity and motivation to his friends and family.</p>
+          <p>You can contribute or suggest quotes by <a href="https://github.com/icco/distraction.today"
+              target="_blank">opening an issue on GitHub</a>.</p>
         </div>
       </div>
     </main>
     <footer class="footer footer-center bg-base-300 text-base-content p-4">
       <aside>
-        {{ if .Quote.SourceURL }}
-        <p>Learn more about the quote: <a href="{{ .Quote.SourceURL }}" target="_blank">{{ .Quote.Source }}</a></p>
-        {{ end }}
-        <p>Quote provided by <a href="{{ .ContributorURL }}" target="_blank">{{ .Quote.Contributor }}</a></p>
-        <p>Learn <a href="/about">about distraction.today</a></p>
         <p>Copyright &copy; {{ .Year }} - All rights reserved.</p>
       </aside>
     </footer>
