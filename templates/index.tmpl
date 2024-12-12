@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>distraction.today</title>
+    <script type="module">
+      import { onCLS, onINP, onLCP, onFCP, onFID, onTTFB } from 'https://unpkg.com/web-vitals@4?module';
+
+      function sendToAnalytics(metric) {
+        const body = JSON.stringify(metric);
+        (navigator.sendBeacon && navigator.sendBeacon('https://reportd.natwelch.com/analytics/distraction.today', body)) ||
+          fetch('https://reportd.natwelch.com/analytics/distraction.today', { body, method: 'POST', keepalive: true });
+      }
+
+      onCLS(sendToAnalytics);
+      onFCP(sendToAnalytics);
+      onFID(sendToAnalytics);
+      onINP(sendToAnalytics);
+      onLCP(sendToAnalytics);
+      onTTFB(sendToAnalytics);
+    </script>
+  </head>
+
+  <body>
+    <h1>A distraction a day keeps the doctor away.</h1>
+    <blockquote>
+      {{ .Quote.Quote }}
+    </blockquote>
+    <p>
+      - {{ .Quote.Author }}
+    </p>
+    <p>
+      Contributed by {{ .Quote.Contributor }}
+    </p>
+  </body>
+
+</html>

@@ -24,11 +24,6 @@ const (
 
 var (
 	log = logging.Must(logging.NewLogger(service))
-
-	// Renderer is a renderer for all occasions. These are our preferred default options.
-	// See:
-	//  - https://github.com/unrolled/render/blob/v1/README.md
-	//  - https://godoc.org/gopkg.in/unrolled/render.v1
 )
 
 func main() {
@@ -89,14 +84,25 @@ func main() {
 			Funcs:                     []template.FuncMap{},
 		})
 
-		data, err := static.GetTodaysQuote(time.Now())
+		q, err := static.GetTodaysQuote(time.Now())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		re.HTML(w, http.StatusOK, "index", data)
+		data := struct {
+			Quote *static.Quote
+		}{
+			Quote: q,
+		}
+
+		if err := re.HTML(w, http.StatusOK, "index", data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
-	http.ListenAndServe(fmt.Sprintf(":%s", port), r)
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), r); err != nil {
+		log.Errorw("Failed to start server", "error", err)
+	}
 }
