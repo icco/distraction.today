@@ -11,6 +11,7 @@ RUN go mod download && go mod verify
 
 COPY *.go .
 COPY static static
+COPY templates templates
 
 RUN go build -v -o /usr/local/bin/server .
 
