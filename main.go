@@ -24,6 +24,15 @@ const (
 
 var (
 	log = logging.Must(logging.NewLogger(service))
+	re  = render.New(render.Options{
+		Charset:                   "UTF-8",
+		DisableHTTPErrorRendering: false,
+		Extensions:                []string{".tmpl", ".html"},
+		IndentJSON:                false,
+		IndentXML:                 true,
+		RequirePartials:           false,
+		Funcs:                     []template.FuncMap{},
+	})
 )
 
 func main() {
@@ -74,16 +83,6 @@ func main() {
 	})
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		re := render.New(render.Options{
-			Charset:                   "UTF-8",
-			DisableHTTPErrorRendering: false,
-			Extensions:                []string{".tmpl", ".html"},
-			IndentJSON:                false,
-			IndentXML:                 true,
-			RequirePartials:           false,
-			Funcs:                     []template.FuncMap{},
-		})
-
 		q, err := static.GetTodaysQuote(time.Now())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -109,4 +108,17 @@ func main() {
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), r); err != nil {
 		log.Errorw("Failed to start server", "error", err)
 	}
+
+	r.Get("/about", func(w http.ResponseWriter, r *http.Request) {
+		data := struct {
+			Year int
+		}{
+			Year: time.Now().Year(),
+		}
+
+		if err := re.HTML(w, http.StatusOK, "about", data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
 }
