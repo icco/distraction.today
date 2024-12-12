@@ -29,8 +29,8 @@
 
       function sendToAnalytics(metric) {
         const body = JSON.stringify(metric);
-        (navigator.sendBeacon && navigator.sendBeacon('https://reportd.natwelch.com/analytics/distraction.today', body)) ||
-          fetch('https://reportd.natwelch.com/analytics/distraction.today', { body, method: 'POST', keepalive: true });
+        (navigator.sendBeacon && navigator.sendBeacon('https://reportd.natwelch.com/analytics/distraction', body)) ||
+          fetch('https://reportd.natwelch.com/analytics/distraction', { body, method: 'POST', keepalive: true });
       }
 
       onCLS(sendToAnalytics);

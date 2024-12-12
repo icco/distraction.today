@@ -62,8 +62,8 @@ func main() {
 
 	r.Use(func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("report-to", `{"group":"default","max_age":10886400,"endpoints":[{"url":"https://reportd.natwelch.com/report/distraction.today"}]}`)
-			w.Header().Set("reporting-endpoints", `default="https://reportd.natwelch.com/reporting/distraction.today"`)
+			w.Header().Set("report-to", `{"group":"default","max_age":10886400,"endpoints":[{"url":"https://reportd.natwelch.com/report/distraction"}]}`)
+			w.Header().Set("reporting-endpoints", `default="https://reportd.natwelch.com/reporting/distraction"`)
 
 			h.ServeHTTP(w, r)
 		})
