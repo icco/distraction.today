@@ -1,4 +1,4 @@
-From golang:1.23-alpine
+FROM golang:1.23-alpine
 
 ENV PORT=8080
 EXPOSE 8080
@@ -10,6 +10,7 @@ COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 
 COPY *.go .
+COPY static static
 
 RUN go build -v -o /usr/local/bin/server .
 
