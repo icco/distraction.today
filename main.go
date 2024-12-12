@@ -105,10 +105,6 @@ func main() {
 		}
 	})
 
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), r); err != nil {
-		log.Errorw("Failed to start server", "error", err)
-	}
-
 	r.Get("/about", func(w http.ResponseWriter, r *http.Request) {
 		data := struct {
 			Year int
@@ -121,4 +117,8 @@ func main() {
 			return
 		}
 	})
+
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), r); err != nil {
+		log.Errorw("Failed to start server", "error", err)
+	}
 }
