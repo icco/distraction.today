@@ -172,11 +172,16 @@ func generateFeed() (*feeds.Feed, error) {
 	}
 
 	for _, quote := range quotes {
+		when, err := time.Parse("2006-01-02", quote.Date)
+		if err != nil {
+			return nil, err
+		}
+
 		feed.Items = append(feed.Items, &feeds.Item{
 			Title:   quote.Date,
 			Content: quote.Quote,
 			Link:    &feeds.Link{Href: fmt.Sprintf("https://distraction.today/%s", quote.Date)},
-			Created: quote.Date,
+			Created: when,
 		})
 	}
 
