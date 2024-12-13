@@ -10,6 +10,7 @@ import (
 	chi "github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/gorilla/feeds"
 	"github.com/icco/distraction.today/static"
 	"github.com/icco/gutil/etag"
 	"github.com/icco/gutil/logging"
@@ -118,7 +119,54 @@ func main() {
 		}
 	})
 
+	r.Get("/feed.rss", func(w http.ResponseWriter, r *http.Request) {
+		feed, err := generateFeed()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/rss+xml")
+		re.Text(w, http.StatusOK, feed.ToRss())
+	})
+
+	r.Get("/feed.atom", func(w http.ResponseWriter, r *http.Request) {
+		feed, err := generateFeed()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/atom+xml")
+		re.Text(w, http.StatusOK, feed.ToAtom())
+	})
+
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), r); err != nil {
 		log.Errorw("Failed to start server", "error", err)
 	}
+}
+
+func generateFeed() (*feeds.Feed, error) {
+	feed := &feeds.Feed{
+		Title:       "distraction.today",
+		Link:        &feeds.Link{Href: "https://distraction.today"},
+		Description: "A daily quote to distract you.",
+		Author:      &feeds.Author{Name: "Nat Welch", Email: "nat@natwelch.com"},
+	}
+
+	quotes, err := static.GetQuotes()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, quote := range quotes {
+		feed.Items = append(feed.Items, &feeds.Item{
+			Title:   quote.Date,
+			Content: quote.Quote,
+			Link:    &feeds.Link{Href: fmt.Sprintf("https://distraction.today/%s", quote.Date)},
+			Created: quote.Date,
+		})
+	}
+
+	return feed, nil
 }
