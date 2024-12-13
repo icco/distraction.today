@@ -25,11 +25,10 @@ const (
 var (
 	log = logging.Must(logging.NewLogger(service))
 	re  = render.New(render.Options{
+		Layout:                    "layout",
 		Charset:                   "UTF-8",
 		DisableHTTPErrorRendering: false,
 		Extensions:                []string{".tmpl", ".html"},
-		IndentJSON:                false,
-		IndentXML:                 true,
 		RequirePartials:           false,
 		Funcs:                     []template.FuncMap{},
 	})
@@ -93,10 +92,12 @@ func main() {
 			Quote          *static.Quote
 			ContributorURL string
 			Year           int
+			Title          string
 		}{
 			Quote:          q,
 			ContributorURL: static.GetContribURL(q.Contributor),
 			Year:           time.Now().Year(),
+			Title:          fmt.Sprintf("distraction.today | %s", time.Now().Format("2006-01-02")),
 		}
 
 		if err := re.HTML(w, http.StatusOK, "index", data); err != nil {
@@ -107,9 +108,11 @@ func main() {
 
 	r.Get("/about", func(w http.ResponseWriter, r *http.Request) {
 		data := struct {
-			Year int
+			Year  int
+			Title string
 		}{
-			Year: time.Now().Year(),
+			Year:  time.Now().Year(),
+			Title: "distraction.today | about",
 		}
 
 		if err := re.HTML(w, http.StatusOK, "about", data); err != nil {
