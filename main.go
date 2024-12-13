@@ -179,9 +179,11 @@ func generateFeed() (*feeds.Feed, error) {
 			return nil, err
 		}
 
+		text := fmt.Sprintf("%q \n - %s", quote.Quote, quote.Author)
+
 		feed.Items = append(feed.Items, &feeds.Item{
 			Title:   quote.Date,
-			Content: quote.Quote,
+			Content: text,
 			Link:    &feeds.Link{Href: fmt.Sprintf("https://distraction.today/%s", quote.Date)},
 			Created: when,
 		})
