@@ -117,7 +117,11 @@ func main() {
 
 		q, err := static.GetTodaysQuote(datetime)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			data := TemplateData{
+				Year:  time.Now().Year(),
+				Title: "distraction.today | 404",
+			}
+			re.HTML(w, http.StatusNotFound, "404", data)
 			return
 		}
 
