@@ -126,8 +126,14 @@ func main() {
 			return
 		}
 
+		data, err := feed.ToRss()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/rss+xml")
-		re.Text(w, http.StatusOK, feed.ToRss())
+		re.Text(w, http.StatusOK, data)
 	})
 
 	r.Get("/feed.atom", func(w http.ResponseWriter, r *http.Request) {
@@ -137,8 +143,14 @@ func main() {
 			return
 		}
 
+		data, err := feed.ToAtom()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/atom+xml")
-		re.Text(w, http.StatusOK, feed.ToAtom())
+		re.Text(w, http.StatusOK, data)
 	})
 
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), r); err != nil {
