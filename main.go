@@ -34,6 +34,13 @@ var (
 	})
 )
 
+type TemplateData struct {
+	Quote          *static.Quote
+	ContributorURL string
+	Year           int
+	Title          string
+}
+
 func main() {
 	port := "8080"
 	if fromEnv := os.Getenv("PORT"); fromEnv != "" {
@@ -88,12 +95,7 @@ func main() {
 			return
 		}
 
-		data := struct {
-			Quote          *static.Quote
-			ContributorURL string
-			Year           int
-			Title          string
-		}{
+		data := TemplateData{
 			Quote:          q,
 			ContributorURL: static.GetContribURL(q.Contributor),
 			Year:           time.Now().Year(),
@@ -107,10 +109,7 @@ func main() {
 	})
 
 	r.Get("/about", func(w http.ResponseWriter, r *http.Request) {
-		data := struct {
-			Year  int
-			Title string
-		}{
+		data := TemplateData{
 			Year:  time.Now().Year(),
 			Title: "distraction.today | about",
 		}
