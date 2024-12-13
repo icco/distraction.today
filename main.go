@@ -90,23 +90,8 @@ func main() {
 	})
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		q, err := static.GetTodaysQuote(time.Now())
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		data := TemplateData{
-			Quote:          q,
-			ContributorURL: static.GetContribURL(q.Contributor),
-			Year:           time.Now().Year(),
-			Title:          fmt.Sprintf("distraction.today | %s", time.Now().Format("2006-01-02")),
-		}
-
-		if err := re.HTML(w, http.StatusOK, "index", data); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		url := fmt.Sprintf("/%s", time.Now().Format("2006-01-02"))
+		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 	})
 
 	r.Get("/about", func(w http.ResponseWriter, r *http.Request) {
@@ -116,6 +101,34 @@ func main() {
 		}
 
 		if err := re.HTML(w, http.StatusOK, "about", data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
+	r.Get("/{year}-{month}-{day}", func(w http.ResponseWriter, r *http.Request) {
+		year, month, day := chi.URLParam(r, "year"), chi.URLParam(r, "month"), chi.URLParam(r, "day")
+		date := fmt.Sprintf("%s-%s-%s", year, month, day)
+		datetime, err := time.Parse("2006-01-02", date)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
+		q, err := static.GetTodaysQuote(datetime)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
+		data := TemplateData{
+			Quote:          q,
+			ContributorURL: static.GetContribURL(q.Contributor),
+			Year:           time.Now().Year(),
+			Title:          fmt.Sprintf("distraction.today | %s", date),
+		}
+
+		if err := re.HTML(w, http.StatusOK, "index", data); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
