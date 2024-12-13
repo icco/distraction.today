@@ -43,6 +43,36 @@ func GetTodaysQuote(date time.Time) (*Quote, error) {
 	return nil, fmt.Errorf("no quote found for date %q", today)
 }
 
+func GetQuotes() ([]*Quote, error) {
+	file, err := fs.Open("quotes.json")
+	if err != nil {
+		return nil, err
+	}
+
+	quotes := []Quote{}
+	if err := json.NewDecoder(file).Decode(&quotes); err != nil {
+		return nil, err
+	}
+
+	var ret []*Quote
+	for _, quote := range quotes {
+		date, err := time.Parse("2006-01-02", quote.Date)
+		if err != nil {
+			continue
+		}
+
+		if date.IsZero() {
+			continue
+		}
+
+		if date.Before(time.Now()) {
+			ret = append(ret, &quote)
+		}
+	}
+
+	return ret, nil
+}
+
 // GetContribURL returns the URL associated with a contributor.
 // It returns an empty string if the contributor is not found or if there's an issue reading the contributors file.
 func GetContribURL(contributor string) string {
