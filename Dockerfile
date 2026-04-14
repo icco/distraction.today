@@ -1,11 +1,12 @@
-FROM golang:1.26-alpine
+FROM golang:1.26-alpine AS builder
 
 ENV PORT=8080
-EXPOSE 8080
+ENV GOPROXY="https://proxy.golang.org"
+ENV CGO_ENABLED=0
 
 WORKDIR /usr/src/app
 
-# pre-copy/cache go.mod for pre-downloading dependencies and only redownloading them in subsequent builds if they change
+# Cache dependency downloads separately from source changes.
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 
@@ -13,6 +14,20 @@ COPY *.go .
 COPY static static
 COPY templates templates
 
-RUN go build -v -o /usr/local/bin/server .
+RUN go build -ldflags="-s -w" -o /usr/local/bin/server .
+
+# ── Runtime image ─────────────────────────────────────────────────────────────
+FROM alpine:3.21
+
+RUN apk add --no-cache ca-certificates tzdata
+
+EXPOSE 8080
+ENV PORT=8080
+
+# Run as a non-root user.
+RUN adduser -S -u 1001 app
+USER app
+
+COPY --from=builder /usr/local/bin/server /usr/local/bin/server
 
 CMD ["server"]
