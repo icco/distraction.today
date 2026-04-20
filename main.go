@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -18,6 +19,9 @@ import (
 	"github.com/unrolled/secure"
 )
 
+//go:embed templates
+var embeddedTemplates embed.FS
+
 const (
 	service = "distraction.today"
 	project = "icco-cloud"
@@ -32,6 +36,7 @@ var (
 		Extensions:                []string{".tmpl", ".html"},
 		RequirePartials:           false,
 		Funcs:                     []template.FuncMap{},
+		FileSystem:                &render.EmbedFileSystem{FS: embeddedTemplates},
 	})
 )
 
