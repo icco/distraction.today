@@ -172,7 +172,15 @@ func main() {
 		re.Text(w, http.StatusOK, data)
 	})
 
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), r); err != nil {
+	srv := &http.Server{
+		Addr:              fmt.Sprintf(":%s", port),
+		Handler:           r,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	if err := srv.ListenAndServe(); err != nil {
 		log.Errorw("Failed to start server", "error", err)
 	}
 }
