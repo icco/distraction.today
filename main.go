@@ -66,7 +66,13 @@ func main() {
 	r.Use(secureMiddleware.Handler)
 
 	crs := cors.New(cors.Options{
-		AllowCredentials:   true,
+		// AllowCredentials must be false when AllowedOrigins is ["*"].
+		// Combining a wildcard origin with credentials causes go-chi/cors to
+		// reflect the incoming Origin header, allowing any site to make
+		// credentialed cross-origin requests (CORS bypass, CWE-942).
+		// distraction.today has no authentication and no endpoints that rely
+		// on cookies or session tokens, so credentials are not required.
+		AllowCredentials:   false,
 		OptionsPassthrough: false,
 		AllowedOrigins:     []string{"*"},
 		AllowedMethods:     []string{"GET", "POST", "OPTIONS"},
