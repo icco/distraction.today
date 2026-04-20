@@ -95,8 +95,13 @@ func main() {
 	})
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		url := fmt.Sprintf("/%s", time.Now().Format("2006-01-02"))
-		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+		date := time.Now().Format("2006-01-02")
+		if _, err := static.GetTodaysQuote(time.Now()); err != nil {
+			if q, err := static.GetLatestQuote(); err == nil {
+				date = q.Date
+			}
+		}
+		http.Redirect(w, r, fmt.Sprintf("/%s", date), http.StatusTemporaryRedirect)
 	})
 
 	r.Get("/about", func(w http.ResponseWriter, r *http.Request) {

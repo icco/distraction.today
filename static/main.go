@@ -43,6 +43,18 @@ func GetTodaysQuote(date time.Time) (*Quote, error) {
 	return nil, fmt.Errorf("no quote found for date %q", today)
 }
 
+// GetLatestQuote returns the most recent quote available.
+func GetLatestQuote() (*Quote, error) {
+	quotes, err := GetQuotes()
+	if err != nil {
+		return nil, err
+	}
+	if len(quotes) == 0 {
+		return nil, fmt.Errorf("no quotes available")
+	}
+	return quotes[len(quotes)-1], nil
+}
+
 func GetQuotes() ([]*Quote, error) {
 	file, err := fs.Open("quotes.json")
 	if err != nil {
