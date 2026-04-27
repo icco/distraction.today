@@ -1,11 +1,16 @@
+// Command distraction.today serves the daily quote site.
 package main
 
 import (
+	"context"
 	"embed"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	chi "github.com/go-chi/chi/v5"
@@ -14,17 +19,22 @@ import (
 	"github.com/icco/distraction.today/static"
 	"github.com/icco/gutil/etag"
 	"github.com/icco/gutil/logging"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/unrolled/render"
 	"github.com/unrolled/secure"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	otelprom "go.opentelemetry.io/otel/exporters/prometheus"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
 	"go.uber.org/zap"
 )
 
 //go:embed templates
 var embeddedTemplates embed.FS
 
-const (
-	service = "distraction.today"
-)
+const service = "distraction.today"
 
 var (
 	log = logging.Must(logging.NewLogger(service))
@@ -53,6 +63,22 @@ func main() {
 	}
 	log.Infow("Starting up", "host", fmt.Sprintf("http://localhost:%s", port))
 
+	registry := prometheus.NewRegistry()
+	exporter, err := otelprom.New(otelprom.WithRegisterer(registry))
+	if err != nil {
+		log.Errorw("otel prometheus exporter", zap.Error(err))
+		os.Exit(1)
+	}
+	mp := sdkmetric.NewMeterProvider(sdkmetric.WithReader(exporter))
+	otel.SetMeterProvider(mp)
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := mp.Shutdown(shutdownCtx); err != nil {
+			log.Warnw("meter provider shutdown", zap.Error(err))
+		}
+	}()
+
 	secureMiddleware := secure.New(secure.Options{
 		SSLRedirect:        false,
 		SSLProxyHeaders:    map[string]string{"X-Forwarded-Proto": "https"},
@@ -64,8 +90,9 @@ func main() {
 	})
 
 	r := chi.NewRouter()
-	r.Use(etag.Handler(false))
 	r.Use(logging.Middleware(log.Desugar()))
+	r.Use(routeTag)
+	r.Use(etag.Handler(false))
 	r.Use(secureMiddleware.Handler)
 
 	crs := cors.New(cors.Options{
@@ -75,7 +102,7 @@ func main() {
 		AllowedMethods:     []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:     []string{"Accept", "Authorization", "Content-Type"},
 		ExposedHeaders:     []string{"Link"},
-		MaxAge:             300, // Maximum value not ignored by any of major browsers
+		MaxAge:             300,
 	})
 	r.Use(crs.Handler)
 
@@ -83,7 +110,6 @@ func main() {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("report-to", `{"group":"default","max_age":10886400,"endpoints":[{"url":"https://reportd.natwelch.com/report/distraction"}]}`)
 			w.Header().Set("reporting-endpoints", `default="https://reportd.natwelch.com/reporting/distraction"`)
-
 			h.ServeHTTP(w, r)
 		})
 	})
@@ -93,6 +119,8 @@ func main() {
 			logging.FromContext(r.Context()).Errorw("write healthz", zap.Error(err))
 		}
 	})
+
+	r.Method(http.MethodGet, "/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		l := logging.FromContext(r.Context())
@@ -204,17 +232,53 @@ func main() {
 		}
 	})
 
+	handler := otelhttp.NewHandler(r, service,
+		otelhttp.WithFilter(func(req *http.Request) bool {
+			return req.URL.Path != "/metrics"
+		}),
+	)
+
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%s", port),
-		Handler:           r,
+		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
-	if err := srv.ListenAndServe(); err != nil {
-		log.Errorw("Failed to start server", "error", err)
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Errorw("http server", zap.Error(err))
+			stop()
+		}
+	}()
+
+	<-ctx.Done()
+	log.Info("shutting down")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Errorw("http shutdown", zap.Error(err))
 	}
+}
+
+// routeTag stamps the chi route pattern onto otelhttp metric labels.
+func routeTag(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(w, r)
+		labeler, ok := otelhttp.LabelerFromContext(r.Context())
+		if !ok {
+			return
+		}
+		if pattern := chi.RouteContext(r.Context()).RoutePattern(); pattern != "" {
+			labeler.Add(semconv.HTTPRoute(pattern))
+		}
+	})
 }
 
 func generateFeed() (*feeds.Feed, error) {
