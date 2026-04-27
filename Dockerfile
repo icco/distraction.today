@@ -19,6 +19,10 @@ RUN go build -ldflags="-s -w" -o /usr/local/bin/server .
 # ── Runtime image ─────────────────────────────────────────────────────────────
 FROM alpine:3.23
 
+LABEL org.opencontainers.image.source=https://github.com/icco/distraction.today
+LABEL org.opencontainers.image.description="Some quotes"
+LABEL org.opencontainers.image.licenses=MIT
+
 RUN apk add --no-cache ca-certificates tzdata
 
 EXPOSE 8080
