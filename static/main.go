@@ -10,18 +10,17 @@ import (
 //go:embed *.json
 var fs embed.FS
 
-// Quote represents a daily quote with its metadata.
+// Quote is a single daily quote.
 type Quote struct {
-	Date        string `json:"date"`        // Date in YYYY-MM-DD format
-	Author      string `json:"author"`      // Author of the quote
-	Quote       string `json:"quote"`       // The actual quote text
-	Contributor string `json:"contributor"` // Person who contributed the quote
-	Source      string `json:"source"`      // Source of the quote
-	SourceURL   string `json:"source_url"`  // URL to the quote source
+	Date        string `json:"date"`
+	Author      string `json:"author"`
+	Quote       string `json:"quote"`
+	Contributor string `json:"contributor"`
+	Source      string `json:"source"`
+	SourceURL   string `json:"source_url"`
 }
 
-// GetTodaysQuote returns the quote for the specified date.
-// It returns an error if no quote is found for the given date or if there's an issue reading the quotes file.
+// GetTodaysQuote returns the quote dated date, or an error if none.
 func GetTodaysQuote(date time.Time) (*Quote, error) {
 	today := date.Format("2006-01-02")
 	file, err := fs.Open("quotes.json")
@@ -85,8 +84,7 @@ func GetQuotes() ([]*Quote, error) {
 	return ret, nil
 }
 
-// GetContribURL returns the URL associated with a contributor.
-// It returns an empty string if the contributor is not found or if there's an issue reading the contributors file.
+// GetContribURL returns the URL for a contributor, or "" if unknown.
 func GetContribURL(contributor string) string {
 	file, err := fs.Open("contributors.json")
 	if err != nil {
