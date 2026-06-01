@@ -1,3 +1,4 @@
+// Package static provides embedded daily quotes and helpers for accessing them.
 package static
 
 import (
@@ -54,6 +55,7 @@ func GetLatestQuote() (*Quote, error) {
 	return quotes[len(quotes)-1], nil
 }
 
+// GetQuotes returns all embedded quotes sorted by date ascending.
 func GetQuotes() ([]*Quote, error) {
 	file, err := fs.Open("quotes.json")
 	if err != nil {
