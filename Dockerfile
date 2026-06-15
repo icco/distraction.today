@@ -17,7 +17,7 @@ COPY templates templates
 RUN go build -ldflags="-s -w" -o /usr/local/bin/server .
 
 # ── Runtime image ─────────────────────────────────────────────────────────────
-FROM alpine:3.23
+FROM alpine:3.24
 
 LABEL org.opencontainers.image.source=https://github.com/icco/distraction.today
 LABEL org.opencontainers.image.description="Some quotes"
