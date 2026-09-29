@@ -4,7 +4,7 @@ Guidance for coding agents working on distraction.today.
 
 ## Project Overview
 
-A daily quote and text service written in Go (`github.com/icco/distraction.today`) served at <https://distraction.today>.
+A daily quote and text service written in Go (`go.icco.me/distraction.today`) served at <https://distraction.today>.
 
 ## Commands
 

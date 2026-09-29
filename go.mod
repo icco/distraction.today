@@ -1,4 +1,4 @@
-module github.com/icco/distraction.today
+module go.icco.me/distraction.today
 
 go 1.26.2
 
