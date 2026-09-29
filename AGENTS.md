@@ -23,6 +23,6 @@ go build .          # Build binary
 
 ## Conventions
 
-- Follow icco Go conventions (`github.com/icco/gutil` for logging and middleware).
+- Follow icco Go conventions (`go.icco.me/gutil` for logging and middleware).
 - PR titles and commits must follow Conventional Commits with lowercase subjects.
 - Ensure all tests pass before submitting PRs.
