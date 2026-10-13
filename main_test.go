@@ -33,7 +33,7 @@ func TestRoutes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.path, func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, tt.path, nil))
+			r.ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, tt.path, nil))
 
 			if rec.Code != tt.wantStatus {
 				t.Fatalf("GET %s status = %d, want %d", tt.path, rec.Code, tt.wantStatus)
