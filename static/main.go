@@ -5,6 +5,8 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"sort"
+	"sync"
 	"time"
 )
 
@@ -21,16 +23,39 @@ type Quote struct {
 	SourceURL   string `json:"source_url"`
 }
 
-// GetTodaysQuote returns the quote dated date, or an error if none.
-func GetTodaysQuote(date time.Time) (*Quote, error) {
-	today := date.Format("2006-01-02")
-	file, err := fs.Open("quotes.json")
+var loadQuotes = sync.OnceValues(func() ([]Quote, error) {
+	data, err := fs.ReadFile("quotes.json")
 	if err != nil {
 		return nil, err
 	}
 
 	quotes := []Quote{}
-	if err := json.NewDecoder(file).Decode(&quotes); err != nil {
+	if err := json.Unmarshal(data, &quotes); err != nil {
+		return nil, err
+	}
+
+	sort.SliceStable(quotes, func(i, j int) bool { return quotes[i].Date < quotes[j].Date })
+	return quotes, nil
+})
+
+var loadContributors = sync.OnceValues(func() (map[string]string, error) {
+	data, err := fs.ReadFile("contributors.json")
+	if err != nil {
+		return nil, err
+	}
+
+	contributors := map[string]string{}
+	if err := json.Unmarshal(data, &contributors); err != nil {
+		return nil, err
+	}
+	return contributors, nil
+})
+
+// GetTodaysQuote returns the quote dated date, or an error if none.
+func GetTodaysQuote(date time.Time) (*Quote, error) {
+	today := date.Format("2006-01-02")
+	quotes, err := loadQuotes()
+	if err != nil {
 		return nil, err
 	}
 
@@ -55,15 +80,10 @@ func GetLatestQuote() (*Quote, error) {
 	return quotes[len(quotes)-1], nil
 }
 
-// GetQuotes returns all embedded quotes sorted by date ascending.
+// GetQuotes returns all embedded quotes dated before now, sorted by date ascending.
 func GetQuotes() ([]*Quote, error) {
-	file, err := fs.Open("quotes.json")
+	quotes, err := loadQuotes()
 	if err != nil {
-		return nil, err
-	}
-
-	quotes := []Quote{}
-	if err := json.NewDecoder(file).Decode(&quotes); err != nil {
 		return nil, err
 	}
 
@@ -71,10 +91,6 @@ func GetQuotes() ([]*Quote, error) {
 	for _, quote := range quotes {
 		date, err := time.Parse("2006-01-02", quote.Date)
 		if err != nil {
-			continue
-		}
-
-		if date.IsZero() {
 			continue
 		}
 
@@ -88,13 +104,8 @@ func GetQuotes() ([]*Quote, error) {
 
 // GetContribURL returns the URL for a contributor, or "" if unknown.
 func GetContribURL(contributor string) string {
-	file, err := fs.Open("contributors.json")
+	contributors, err := loadContributors()
 	if err != nil {
-		return ""
-	}
-
-	contributors := map[string]string{}
-	if err := json.NewDecoder(file).Decode(&contributors); err != nil {
 		return ""
 	}
 

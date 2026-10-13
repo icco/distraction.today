@@ -18,7 +18,8 @@ go build .          # Build binary
 ## Architecture & Layout
 
 - `main.go` — Entrypoint, Chi router, and HTTP middleware setup.
-- `quotes.go` / `quotes_test.go` — Quote retrieval, storage, and date indexing.
+- `static/` — Embedded `quotes.json` and `contributors.json`, plus lookup helpers in `static/main.go`.
+- `main_test.go` — HTTP route tests.
 - `templates/` — HTML rendering templates.
 
 ## Conventions

@@ -79,6 +79,91 @@ func main() {
 		}
 	}()
 
+	r := newRouter(registry)
+
+	handler := otelhttp.NewHandler(r, service,
+		otelhttp.WithFilter(func(req *http.Request) bool {
+			return req.URL.Path != "/metrics"
+		}),
+	)
+
+	srv := &http.Server{
+		Addr:              fmt.Sprintf(":%s", port),
+		Handler:           handler,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Errorw("http server", zap.Error(err))
+			stop()
+		}
+	}()
+
+	<-ctx.Done()
+	log.Info("shutting down")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Errorw("http shutdown", zap.Error(err))
+	}
+}
+
+// routeTag stamps the chi route pattern onto otelhttp metric labels.
+func routeTag(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(w, r)
+		labeler, ok := otelhttp.LabelerFromContext(r.Context())
+		if !ok {
+			return
+		}
+		if pattern := chi.RouteContext(r.Context()).RoutePattern(); pattern != "" {
+			labeler.Add(semconv.HTTPRoute(pattern))
+		}
+	})
+}
+
+func generateFeed() (*feeds.Feed, error) {
+	feed := &feeds.Feed{
+		Title:       "distraction.today",
+		Link:        &feeds.Link{Href: "https://distraction.today"},
+		Description: "A daily quote to distract you.",
+		Author:      &feeds.Author{Name: "Nat Welch", Email: "nat@natwelch.com"},
+	}
+
+	quotes, err := static.GetQuotes()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, quote := range quotes {
+		when, err := time.Parse("2006-01-02", quote.Date)
+		if err != nil {
+			return nil, err
+		}
+
+		text := fmt.Sprintf("%q \n - %s", quote.Quote, quote.Author)
+
+		feed.Items = append(feed.Items, &feeds.Item{
+			Title:   quote.Date,
+			Content: text,
+			Link:    &feeds.Link{Href: fmt.Sprintf("https://distraction.today/%s", quote.Date)},
+			Created: when,
+		})
+	}
+
+	return feed, nil
+}
+
+// newRouter builds the HTTP routes and middleware.
+func newRouter(registry *prometheus.Registry) chi.Router {
 	secureMiddleware := secure.New(secure.Options{
 		SSLRedirect:        false,
 		SSLProxyHeaders:    map[string]string{"X-Forwarded-Proto": "https"},
@@ -99,7 +184,7 @@ func main() {
 		AllowCredentials:   false,
 		OptionsPassthrough: false,
 		AllowedOrigins:     []string{"*"},
-		AllowedMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowedMethods:     []string{"GET", "OPTIONS"},
 		AllowedHeaders:     []string{"Accept", "Authorization", "Content-Type"},
 		ExposedHeaders:     []string{"Link"},
 		MaxAge:             300,
@@ -232,83 +317,5 @@ func main() {
 		}
 	})
 
-	handler := otelhttp.NewHandler(r, service,
-		otelhttp.WithFilter(func(req *http.Request) bool {
-			return req.URL.Path != "/metrics"
-		}),
-	)
-
-	srv := &http.Server{
-		Addr:              fmt.Sprintf(":%s", port),
-		Handler:           handler,
-		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       10 * time.Second,
-		WriteTimeout:      10 * time.Second,
-		IdleTimeout:       60 * time.Second,
-	}
-
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
-	go func() {
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Errorw("http server", zap.Error(err))
-			stop()
-		}
-	}()
-
-	<-ctx.Done()
-	log.Info("shutting down")
-
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Errorw("http shutdown", zap.Error(err))
-	}
-}
-
-// routeTag stamps the chi route pattern onto otelhttp metric labels.
-func routeTag(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		next.ServeHTTP(w, r)
-		labeler, ok := otelhttp.LabelerFromContext(r.Context())
-		if !ok {
-			return
-		}
-		if pattern := chi.RouteContext(r.Context()).RoutePattern(); pattern != "" {
-			labeler.Add(semconv.HTTPRoute(pattern))
-		}
-	})
-}
-
-func generateFeed() (*feeds.Feed, error) {
-	feed := &feeds.Feed{
-		Title:       "distraction.today",
-		Link:        &feeds.Link{Href: "https://distraction.today"},
-		Description: "A daily quote to distract you.",
-		Author:      &feeds.Author{Name: "Nat Welch", Email: "nat@natwelch.com"},
-	}
-
-	quotes, err := static.GetQuotes()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, quote := range quotes {
-		when, err := time.Parse("2006-01-02", quote.Date)
-		if err != nil {
-			return nil, err
-		}
-
-		text := fmt.Sprintf("%q \n - %s", quote.Quote, quote.Author)
-
-		feed.Items = append(feed.Items, &feeds.Item{
-			Title:   quote.Date,
-			Content: text,
-			Link:    &feeds.Link{Href: fmt.Sprintf("https://distraction.today/%s", quote.Date)},
-			Created: when,
-		})
-	}
-
-	return feed, nil
+	return r
 }
