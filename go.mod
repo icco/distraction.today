@@ -3,7 +3,7 @@ module go.icco.me/distraction.today
 go 1.26.2
 
 require (
-	github.com/go-chi/chi/v5 v5.3.2
+	github.com/go-chi/chi/v5 v5.5.0
 	github.com/go-chi/cors v1.2.2
 	github.com/gorilla/feeds v1.2.0
 	github.com/prometheus/client_golang v1.25.0
