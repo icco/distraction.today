@@ -23,7 +23,7 @@ LABEL org.opencontainers.image.source=https://github.com/icco/distraction.today
 LABEL org.opencontainers.image.description="Some quotes"
 LABEL org.opencontainers.image.licenses=MIT
 
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk upgrade --no-cache ca-certificates ca-certificates-bundle && apk add --no-cache ca-certificates tzdata
 
 EXPOSE 8080
 ENV PORT=8080
