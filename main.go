@@ -23,6 +23,7 @@ import (
 	"go.icco.me/distraction.today/static"
 	"go.icco.me/gutil/etag"
 	"go.icco.me/gutil/logging"
+	"go.icco.me/gutil/tracing"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	otelprom "go.opentelemetry.io/otel/exporters/prometheus"
@@ -57,17 +58,35 @@ type TemplateData struct {
 }
 
 func main() {
+	if err := run(); err != nil {
+		log.Errorw("startup error", zap.Error(err))
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	port := "8080"
 	if fromEnv := os.Getenv("PORT"); fromEnv != "" {
 		port = fromEnv
 	}
 	log.Infow("Starting up", "host", fmt.Sprintf("http://localhost:%s", port))
 
+	shutdown, err := tracing.Init(context.Background(), service)
+	if err != nil {
+		return fmt.Errorf("tracing init: %w", err)
+	}
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := shutdown(shutdownCtx); err != nil {
+			log.Warnw("tracing shutdown", zap.Error(err))
+		}
+	}()
+
 	registry := prometheus.NewRegistry()
 	exporter, err := otelprom.New(otelprom.WithRegisterer(registry))
 	if err != nil {
-		log.Errorw("otel prometheus exporter", zap.Error(err))
-		os.Exit(1)
+		return fmt.Errorf("otel prometheus exporter: %w", err)
 	}
 	mp := sdkmetric.NewMeterProvider(sdkmetric.WithReader(exporter))
 	otel.SetMeterProvider(mp)
@@ -83,7 +102,7 @@ func main() {
 
 	handler := otelhttp.NewHandler(r, service,
 		otelhttp.WithFilter(func(req *http.Request) bool {
-			return req.URL.Path != "/metrics"
+			return req.URL.Path != "/metrics" && req.URL.Path != "/healthz"
 		}),
 	)
 
@@ -114,6 +133,7 @@ func main() {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Errorw("http shutdown", zap.Error(err))
 	}
+	return nil
 }
 
 // routeTag stamps the chi route pattern onto otelhttp metric labels.
