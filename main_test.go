@@ -22,7 +22,7 @@ func TestRoutes(t *testing.T) {
 		{path: "/healthz", wantStatus: http.StatusOK, wantBody: "hi."},
 		{path: "/", wantStatus: http.StatusTemporaryRedirect, wantHeaders: map[string]string{"Location": "/2024-12-14"}},
 		{path: "/2024-12-12", wantStatus: http.StatusOK, wantBody: "Be yourself; everyone else is already taken."},
-		{path: "/1999-01-01", wantStatus: http.StatusNotFound},
+		{path: "/1999-01-01", wantStatus: http.StatusNotFound, wantBody: "<svg"},
 		{path: "/2024-13-45", wantStatus: http.StatusNotFound},
 		{path: "/about", wantStatus: http.StatusOK},
 		{path: "/feed.rss", wantStatus: http.StatusOK, wantType: "application/rss+xml", wantBody: "https://distraction.today/2024-12-13"},
