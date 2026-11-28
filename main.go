@@ -16,6 +16,7 @@ import (
 	chi "github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/gorilla/feeds"
+	lucide "github.com/kaugesaar/lucide-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/unrolled/render"
@@ -45,7 +46,7 @@ var (
 		DisableHTTPErrorRendering: false,
 		Extensions:                []string{".tmpl", ".html"},
 		RequirePartials:           false,
-		Funcs:                     []template.FuncMap{},
+		Funcs:                     []template.FuncMap{lucide.FuncMap()},
 		FileSystem:                &render.EmbedFileSystem{FS: embeddedTemplates},
 	})
 )
